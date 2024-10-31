@@ -1,1 +1,1 @@
-# open-sponsor
+# open-support
