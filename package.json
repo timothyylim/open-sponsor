@@ -1,5 +1,5 @@
 {
-  "name": "open-sponsor",
+  "name": "open-support",
   "version": "0.1.0",
   "description": "",
   "main": "index.js",
@@ -8,12 +8,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/timothyylim/open-sponsor.git"
+    "url": "git+https://github.com/timothyylim/open-support.git"
   },
   "author": "Timothy Lim",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/timothyylim/open-sponsor/issues"
+    "url": "https://github.com/timothyylim/open-support/issues"
   },
-  "homepage": "https://github.com/timothyylim/open-sponsor#readme"
+  "homepage": "https://github.com/timothyylim/open-support#readme"
 }
