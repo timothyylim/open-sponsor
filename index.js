@@ -171,7 +171,7 @@ switch (command) {
         // Create graphical ranking analysis
         console.log('\n=== DEPENDENCY USAGE RANKING ===');
         
-        const maxBarLength = 50; // Maximum length of the bar
+        const maxBarLength = 30; // Reduced from 50
         const rankedDependencies = [...dependencyUsage.entries()]
             .sort((a, b) => b[1].count - a[1].count);
         
@@ -179,26 +179,21 @@ switch (command) {
         const maxCount = Math.max(...rankedDependencies.map(([_, data]) => data.count));
         
         // Display top dependencies with graphical bars
-        console.log('\nMost Used Dependencies:');
-        console.log('─'.repeat(80));
+        console.log('─'.repeat(65)); // Reduced line length
         rankedDependencies.forEach(([name, data], index) => {
             const barLength = Math.round((data.count / maxCount) * maxBarLength);
             const bar = '█'.repeat(barLength) + '░'.repeat(maxBarLength - barLength);
             const percentage = ((data.count / maxCount) * 100).toFixed(1);
-            const versions = [...data.versions].join(', ');
             
-            console.log(`${(index + 1).toString().padStart(2)}. ${name.padEnd(20)} `
-                + `${bar} ${data.count} uses (${percentage}%)`);
-            console.log(`    ${' '.repeat(22)}${data.dirs.size} dirs | versions: ${versions}`);
+            console.log(`${(index + 1).toString().padStart(2)}. ${name.padEnd(15)} `
+                + `${bar} ${data.count} (${percentage}%)`);
+            console.log(`    v${[...data.versions].join(', ')} | ${data.dirs.size} dirs`);
         });
-        console.log('─'.repeat(80));
+        console.log('─'.repeat(65));
 
-        // Summary statistics
-        console.log('\nSummary:');
-        console.log(`Total Unique Dependencies: ${dependencyUsage.size}`);
-        console.log(`Most Used: ${rankedDependencies[0][0]} (${rankedDependencies[0][1].count} uses)`);
-        console.log(`Total Import Complexity: ${totalImportScore}`);
-        console.log(`Average Import Score: ${(totalImportScore / storedDirs.directories.length).toFixed(2)}`);
+        // Shorter summary
+        console.log(`\nTotal Dependencies: ${dependencyUsage.size} | `
+            + `Import Score: ${(totalImportScore / storedDirs.directories.length).toFixed(2)}`);
 
         rl.close();
         break;
