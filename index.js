@@ -119,35 +119,87 @@ switch (command) {
 
     case 'analyze':
         const storedDirs = getStoredDirectories();
-        console.log('\nAnalyzing directories...\n');
+        console.log('\nAnalyzing stored directories:\n');
         
-        const results = storedDirs.directories.map(analyzeDirectory);
+        // Track dependencies across all directories
+        const dependencyUsage = new Map();
+        let totalImportScore = 0;
         
-        // Sort results by score (highest first)
-        results.sort((a, b) => b.score - a.score);
-        
-        // Display results
-        results.forEach((result, index) => {
-            if (result.error) {
-                console.log(`${index + 1}. ${result.path}`);
-                console.log(`   Error: ${result.error}`);
-                console.log(`   Score: 0/100\n`);
+        storedDirs.directories.forEach((dirPath) => {
+            console.log(`\nAnalyzing ${dirPath}:`);
+            
+            // Analyze dependencies
+            const dependencies = dependencyAnalyzer.analyzeDependencies(dirPath);
+            if (dependencies.length > 0) {
+                console.log('\nDependencies found:');
+                dependencies.forEach(dep => {
+                    console.log(`${dep.name}@${dep.version} - Used ${dep.count} times`);
+                    
+                    // Track detailed dependency usage
+                    if (!dependencyUsage.has(dep.name)) {
+                        dependencyUsage.set(dep.name, {
+                            count: 0,
+                            versions: new Set(),
+                            dirs: new Set()
+                        });
+                    }
+                    const usage = dependencyUsage.get(dep.name);
+                    usage.count += dep.count;
+                    usage.versions.add(dep.version);
+                    usage.dirs.add(dirPath);
+                });
             } else {
-                console.log(`${index + 1}. ${result.path}`);
-                console.log(`   Files: ${result.fileCount}`);
-                console.log(`   Size: ${result.size} MB`);
-                console.log('   Top Dependencies:');
-                if (result.dependencyScore && result.dependencyScore.length > 0) {
-                    result.dependencyScore.forEach(dep => {
-                        console.log(`     - ${dep.name} v${dep.version} (${dep.count} references)`);
-                    });
-                } else {
-                    console.log('     No dependencies found');
-                }
-                console.log(`   Import Score: ${result.importScore}/15`);
-                console.log(`   Total Score: ${result.score}/100\n`);
+                console.log('No dependencies found or no package.json present');
             }
+            
+            // Analyze imports
+            const imports = importAnalyzer.analyzeImports(dirPath);
+            if (imports > 0) {
+                console.log(`\nImport Analysis Score: ${imports}`);
+                totalImportScore += imports;
+            } else {
+                console.log('\nNo imports found or unable to analyze imports');
+            }
+            
+            const analysis = analyzeDirectory(dirPath);
+            console.log(`\nOverall Analysis:`);
+            console.log(`- File Count: ${analysis.fileCount}`);
+            console.log(`- Directory Size: ${analysis.size} MB`);
+            console.log(`- Overall Score: ${analysis.score}/100`);
         });
+
+        // Create graphical ranking analysis
+        console.log('\n=== DEPENDENCY USAGE RANKING ===');
+        
+        const maxBarLength = 50; // Maximum length of the bar
+        const rankedDependencies = [...dependencyUsage.entries()]
+            .sort((a, b) => b[1].count - a[1].count);
+        
+        // Find the highest count for scaling
+        const maxCount = Math.max(...rankedDependencies.map(([_, data]) => data.count));
+        
+        // Display top dependencies with graphical bars
+        console.log('\nMost Used Dependencies:');
+        console.log('─'.repeat(80));
+        rankedDependencies.forEach(([name, data], index) => {
+            const barLength = Math.round((data.count / maxCount) * maxBarLength);
+            const bar = '█'.repeat(barLength) + '░'.repeat(maxBarLength - barLength);
+            const percentage = ((data.count / maxCount) * 100).toFixed(1);
+            const versions = [...data.versions].join(', ');
+            
+            console.log(`${(index + 1).toString().padStart(2)}. ${name.padEnd(20)} `
+                + `${bar} ${data.count} uses (${percentage}%)`);
+            console.log(`    ${' '.repeat(22)}${data.dirs.size} dirs | versions: ${versions}`);
+        });
+        console.log('─'.repeat(80));
+
+        // Summary statistics
+        console.log('\nSummary:');
+        console.log(`Total Unique Dependencies: ${dependencyUsage.size}`);
+        console.log(`Most Used: ${rankedDependencies[0][0]} (${rankedDependencies[0][1].count} uses)`);
+        console.log(`Total Import Complexity: ${totalImportScore}`);
+        console.log(`Average Import Score: ${(totalImportScore / storedDirs.directories.length).toFixed(2)}`);
+
         rl.close();
         break;
 
